@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>51 Score Tracker</title>
+    <title>51 Datasheet & Leaderboard</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -25,6 +25,25 @@
             color: #2c3e50;
             margin-top: 10px;
         }
+        
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .nav-tabs button {
+            background-color: #bdc3c7;
+            color: #2c3e50;
+            margin: 0;
+            border-radius: 5px 5px 0 0;
+            flex: 1;
+        }
+        .nav-tabs button.active-tab {
+            background-color: #3498db;
+            color: white;
+        }
+
         .input-group {
             margin-bottom: 15px;
             text-align: left;
@@ -56,6 +75,10 @@
         button:hover {
             background-color: #2980b9;
         }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
         .hidden {
             display: none;
         }
@@ -77,6 +100,9 @@
             background-color: #3498db;
             color: white;
             vertical-align: top;
+        }
+        .leaderboard-table th {
+            background-color: #e67e22;
         }
         .totals-row {
             font-weight: bold;
@@ -114,124 +140,198 @@
 <body>
 
 <div class="container">
-    <h1>51 Datasheet</h1>
+    <h1>51 Tracker</h1>
 
-    <!-- SECTION 1: Game Setup -->
-    <div id="setup-section">
-        <h2>Game Setup</h2>
-        
-        <div class="input-group">
-            <label for="player-count">Number of Players:</label>
-            <select id="player-count" onchange="updatePlayerInputs()">
-                <option value="2">2 Players</option>
-                <option value="3">3 Players</option>
-                <option value="4" selected>4 Players</option>
-            </select>
-        </div>
-
-        <div class="input-group" id="names-container">
-            <label>Player Names:</label>
-            <input type="text" id="player1" placeholder="Player 1">
-            <input type="text" id="player2" placeholder="Player 2">
-            <input type="text" id="player3" placeholder="Player 3">
-            <input type="text" id="player4" placeholder="Player 4">
-        </div>
-
-        <div class="input-group">
-            <label for="total-rounds">Number of Rounds:</label>
-            <input type="number" id="total-rounds" value="11" min="1">
-        </div>
-
-        <button onclick="startGame()">Create Datasheet</button>
+    <div class="nav-tabs">
+        <button id="tab-game" class="active-tab" onclick="switchTab('game')">Play Game</button>
+        <button id="tab-leaderboard" onclick="switchTab('leaderboard')">Leaderboard</button>
     </div>
 
-    <!-- SECTION 2: Active Datasheet -->
-    <div id="game-section" class="hidden">
-        <h2 id="round-title">Round 1</h2>
+    <!-- ==================== GAME TAB ==================== -->
+    <div id="tab-content-game">
         
-        <!-- Score Inputs for Current Round -->
-        <div id="score-inputs" class="input-group"></div>
-        
-        <button onclick="submitRound()">Submit Round Penalties</button>
-        <button onclick="endGame()" style="background-color: #e74c3c;">End Game Now</button>
+        <!-- Game Setup -->
+        <div id="setup-section">
+            <h2>Game Setup</h2>
+            
+            <div class="input-group">
+                <label for="player-count">Number of Players:</label>
+                <select id="player-count" onchange="updatePlayerInputs()">
+                    <option value="2">2 Players</option>
+                    <option value="3">3 Players</option>
+                    <option value="4" selected>4 Players</option>
+                </select>
+            </div>
 
-        <h3>Live Datasheet</h3>
-        <p style="font-size: 12px; color: #555;">(Tap a 🏆 to deduct 100 pts)</p>
+            <div class="input-group" id="names-container">
+                <label>Player Names:</label>
+                <input type="text" id="player1" placeholder="Naif">
+                <input type="text" id="player2" placeholder="Semra">
+                <input type="text" id="player3" placeholder="Deniz Dora">
+                <input type="text" id="player4" placeholder="Player 4">
+            </div>
+
+            <div class="input-group">
+                <label for="total-rounds">Number of Rounds:</label>
+                <input type="number" id="total-rounds" value="11" min="1">
+            </div>
+
+            <button onclick="startGame()">Create Datasheet</button>
+        </div>
+
+        <!-- Active Datasheet -->
+        <div id="game-section" class="hidden">
+            <h2 id="round-title">Round 1</h2>
+            
+            <div id="score-inputs" class="input-group"></div>
+            
+            <button onclick="submitRound()">Submit Round Penalties</button>
+            <button onclick="endGame()" style="background-color: #e74c3c;">End Game Now</button>
+
+            <h3>Live Datasheet</h3>
+            <p style="font-size: 12px; color: #555;">(Tap a 🏆 to deduct 100 pts)</p>
+            
+            <div class="table-container">
+                <table id="score-table">
+                    <thead>
+                        <tr id="table-headers">
+                            <th>Rnd</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    </tbody>
+                    <tfoot>
+                        <tr id="table-totals" class="totals-row">
+                            <td>Total</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- Final Results -->
+        <div id="results-section" class="hidden">
+            <h2>Game Finished!</h2>
+            <div id="final-standings" class="results-box"></div>
+            
+            <button id="save-btn" onclick="saveToFirebase()" style="background-color: #2ecc71;">Save Game to Leaderboard</button>
+            <button onclick="location.reload()" style="background-color: #7f8c8d;">Reset for New Game</button>
+        </div>
+
+    </div>
+
+    <!-- ==================== LEADERBOARD TAB ==================== -->
+    <div id="tab-content-leaderboard" class="hidden">
+        <h2>All-Time Leaderboard</h2>
+        <button onclick="loadLeaderboard()" style="background-color: #e67e22; margin-bottom: 15px;">Refresh Leaderboard</button>
         
         <div class="table-container">
-            <table id="score-table">
+            <table class="leaderboard-table">
                 <thead>
-                    <tr id="table-headers">
-                        <th>Rnd</th>
-                        <!-- Player headers will generate here -->
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Games</th>
+                        <th>Total Pts</th>
                     </tr>
                 </thead>
-                <tbody id="table-body">
-                    <!-- Round scores go here -->
+                <tbody id="leaderboard-body">
+                    <tr><td colspan="6">Loading...</td></tr>
                 </tbody>
-                <tfoot>
-                    <tr id="table-totals" class="totals-row">
-                        <td>Total</td>
-                        <!-- Totals will go here -->
-                    </tr>
-                </tfoot>
             </table>
         </div>
     </div>
-
-    <!-- SECTION 3: Final Results -->
-    <div id="results-section" class="hidden">
-        <h2>Game Finished!</h2>
-        <div id="final-standings" class="results-box"></div>
-        <button onclick="location.reload()">Start New Game</button>
-    </div>
 </div>
 
-<script>
+<script type="module">
+    // Import Firebase tools straight from the Cloud
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // =======================================================
+    // ⚠️ PASTE YOUR FIREBASE CONFIG HERE ⚠️
+    // =======================================================
+    const firebaseConfig = {
+        // It should look something like this:
+        // apiKey: "AIzaSy...",
+        // authDomain: "your-project.firebaseapp.com",
+        // projectId: "your-project",
+        // storageBucket: "your-project.appspot.com",
+        // messagingSenderId: "123456789",
+        // appId: "1:123456789:web:abcdef"
+    };
+    // =======================================================
+
+    let app, db;
+    try {
+        if(Object.keys(firebaseConfig).length > 0) {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+        }
+    } catch(e) {
+        console.log("Firebase not configured yet.");
+    }
+
+    // Standard Game Variables
     let players = [];
     let totals = [];
     let currentRound = 1;
     let maxRounds = 11;
+    window.finalStandingsData = []; 
 
-    // Show/Hide player name inputs based on dropdown
-    function updatePlayerInputs() {
+    // --- Tab Switching Logic ---
+    window.switchTab = function(tab) {
+        document.getElementById('tab-content-game').classList.add('hidden');
+        document.getElementById('tab-content-leaderboard').classList.add('hidden');
+        document.getElementById('tab-game').classList.remove('active-tab');
+        document.getElementById('tab-leaderboard').classList.remove('active-tab');
+
+        document.getElementById('tab-content-' + tab).classList.remove('hidden');
+        document.getElementById('tab-' + tab).classList.add('active-tab');
+
+        if (tab === 'leaderboard') {
+            window.loadLeaderboard();
+        }
+    };
+
+    // --- Game Logic ---
+    window.updatePlayerInputs = function() {
         const count = parseInt(document.getElementById('player-count').value);
         document.getElementById('player3').style.display = count >= 3 ? 'block' : 'none';
         document.getElementById('player4').style.display = count === 4 ? 'block' : 'none';
-    }
+    };
 
-    function startGame() {
+    window.startGame = function() {
         players = [];
         const count = parseInt(document.getElementById('player-count').value);
         maxRounds = parseInt(document.getElementById('total-rounds').value) || 11;
 
-        // Gather names
         for (let i = 1; i <= count; i++) {
-            let name = document.getElementById('player' + i).value.trim();
-            if (!name) name = "Player " + i; 
+            let inputField = document.getElementById('player' + i);
+            let name = inputField.value.trim();
+            if (!name) name = inputField.placeholder; // Use placeholders if left blank
             players.push(name);
         }
 
         totals = new Array(players.length).fill(0);
 
-        // Switch screens
         document.getElementById('setup-section').classList.add('hidden');
         document.getElementById('game-section').classList.remove('hidden');
         document.getElementById('round-title').textContent = "Round 1 of " + maxRounds;
 
-        setupTable();
-        generateInputs();
-    }
+        window.setupTable();
+        window.generateInputs();
+    };
 
-    function setupTable() {
+    window.setupTable = function() {
         const headerRow = document.getElementById('table-headers');
         const totalsRow = document.getElementById('table-totals');
         
         players.forEach((player, index) => {
-            // Create Header Cell
             let th = document.createElement('th');
             
-            // 1. Create Trophies
             let trophyDiv = document.createElement('div');
             trophyDiv.className = 'trophies';
             for (let i = 0; i < 15; i++) {
@@ -249,22 +349,20 @@
             }
             th.appendChild(trophyDiv);
             
-            // 2. Add Player Name
             let nameDiv = document.createElement('div');
             nameDiv.textContent = player;
             th.appendChild(nameDiv);
             
             headerRow.appendChild(th);
 
-            // Create Total Cell
             let td = document.createElement('td');
             td.id = 'total-' + index;
             td.textContent = '0';
             totalsRow.appendChild(td);
         });
-    }
+    };
 
-    function generateInputs() {
+    window.generateInputs = function() {
         const inputDiv = document.getElementById('score-inputs');
         inputDiv.innerHTML = ''; 
 
@@ -272,18 +370,17 @@
             let input = document.createElement('input');
             input.type = 'number';
             input.id = 'input-' + index;
-            input.placeholder = player + "'s Penalty Points";
+            input.placeholder = player + " points";
             inputDiv.appendChild(input);
         });
-    }
+    };
 
-    function submitRound() {
+    window.submitRound = function() {
         if (currentRound > maxRounds) return;
 
         const tableBody = document.getElementById('table-body');
         const tr = document.createElement('tr');
         
-        // Add Round Number
         let roundCell = document.createElement('td');
         roundCell.textContent = currentRound;
         tr.appendChild(roundCell);
@@ -291,7 +388,6 @@
         let roundScores = [];
         let allFilled = true;
 
-        // Check if all scores are entered
         for (let i = 0; i < players.length; i++) {
             let val = document.getElementById('input-' + i).value;
             if (val === '') {
@@ -306,7 +402,6 @@
             return;
         }
 
-        // Add scores to table and update totals
         for (let i = 0; i < players.length; i++) {
             let td = document.createElement('td');
             td.textContent = roundScores[i];
@@ -314,44 +409,141 @@
             
             totals[i] += roundScores[i];
             document.getElementById('total-' + i).textContent = totals[i];
-            document.getElementById('input-' + i).value = ''; // clear input for next round
+            document.getElementById('input-' + i).value = ''; 
         }
 
         tableBody.appendChild(tr);
         currentRound++;
 
         if (currentRound > maxRounds) {
-            endGame();
+            window.endGame();
         } else {
             document.getElementById('round-title').textContent = "Round " + currentRound + " of " + maxRounds;
         }
-    }
+    };
 
-    function endGame() {
+    window.endGame = function() {
         document.getElementById('game-section').classList.add('hidden');
         document.getElementById('results-section').classList.remove('hidden');
 
-        // Pair names with their final scores
         let standings = [];
         for (let i = 0; i < players.length; i++) {
             standings.push({ name: players[i], score: totals[i] });
         }
 
-        // Sort by lowest penalty
+        // Lowest penalty points is best
         standings.sort((a, b) => a.score - b.score);
+        window.finalStandingsData = standings;
 
         let resultHTML = "<h3>Final Standings:</h3>";
-        let placements = ["1st Place", "2nd Place", "3rd Place", "4th Place"];
+        let placements = ["🥇 1st Place", "🥈 2nd Place", "🥉 3rd Place", "💀 4th Place"];
 
         for (let i = 0; i < standings.length; i++) {
-            resultHTML += "<p><strong>" + placements[i] + ":</strong> " + standings[i].name + " (" + standings[i].score + " points)</p>";
+            resultHTML += "<p><strong>" + (placements[i] || (i+1)+"th") + ":</strong> " + standings[i].name + " (" + standings[i].score + " points)</p>";
         }
 
         document.getElementById('final-standings').innerHTML = resultHTML;
-    }
-    
-    // Initialize the setup screen on load
-    updatePlayerInputs();
+    };
+
+    // --- Firebase Cloud Database Logic ---
+    window.saveToFirebase = async function() {
+        if (!db) {
+            alert("Firebase is not configured yet! Please paste your config in the code.");
+            return;
+        }
+        
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.textContent = "Saving to Cloud...";
+        saveBtn.disabled = true;
+
+        try {
+            const standings = window.finalStandingsData;
+            
+            for (let i = 0; i < standings.length; i++) {
+                const player = standings[i];
+                const playerId = player.name.toLowerCase().trim();
+                
+                // Index 0 has the lowest score (winner). Last index has highest (loser).
+                let isWinner = (i === 0) ? 1 : 0;
+                let isLoser = (i === standings.length - 1 && standings.length > 1) ? 1 : 0;
+
+                const playerRef = doc(db, "players", playerId);
+                const snap = await getDoc(playerRef);
+
+                if (snap.exists()) {
+                    await updateDoc(playerRef, {
+                        wins: increment(isWinner),
+                        losses: increment(isLoser),
+                        points: increment(player.score),
+                        gamesPlayed: increment(1)
+                    });
+                } else {
+                    await setDoc(playerRef, {
+                        name: player.name,
+                        wins: isWinner,
+                        losses: isLoser,
+                        points: player.score,
+                        gamesPlayed: 1
+                    });
+                }
+            }
+            alert("Scores successfully saved to the All-Time Leaderboard!");
+            saveBtn.textContent = "Saved ✓";
+        } catch(error) {
+            console.error(error);
+            alert("Error saving data. Check console.");
+            saveBtn.textContent = "Try Saving Again";
+            saveBtn.disabled = false;
+        }
+    };
+
+    window.loadLeaderboard = async function() {
+        if (!db) {
+            document.getElementById('leaderboard-body').innerHTML = "<tr><td colspan='6'>Paste your Firebase Config in the code to see stats.</td></tr>";
+            return;
+        }
+
+        document.getElementById('leaderboard-body').innerHTML = "<tr><td colspan='6'>Loading data from Cloud...</td></tr>";
+
+        try {
+            const querySnapshot = await getDocs(collection(db, "players"));
+            let allPlayers = [];
+            
+            querySnapshot.forEach((doc) => {
+                allPlayers.push(doc.data());
+            });
+
+            // Sort logic: Most Wins first. If tied, Least Points first.
+            allPlayers.sort((a, b) => {
+                if (b.wins !== a.wins) return b.wins - a.wins;
+                return a.points - b.points; 
+            });
+
+            let html = "";
+            allPlayers.forEach((p, index) => {
+                html += `<tr>
+                    <td><strong>${index + 1}</strong></td>
+                    <td>${p.name}</td>
+                    <td>${p.wins}</td>
+                    <td>${p.losses}</td>
+                    <td>${p.gamesPlayed}</td>
+                    <td>${p.points}</td>
+                </tr>`;
+            });
+
+            if (allPlayers.length === 0) {
+                html = "<tr><td colspan='6'>No games have been saved yet!</td></tr>";
+            }
+
+            document.getElementById('leaderboard-body').innerHTML = html;
+        } catch(error) {
+            console.error(error);
+            document.getElementById('leaderboard-body').innerHTML = "<tr><td colspan='6'>Error loading. Did you remember to enable 'Test Mode' in Firestore?</td></tr>";
+        }
+    };
+
+    // Initialize inputs when page loads
+    window.updatePlayerInputs();
 </script>
 
 </body>
